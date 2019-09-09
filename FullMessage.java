@@ -19,32 +19,24 @@ public class FullMessage extends javax.swing.JDialog {
         initCustom();
     }
     
-    // ustawiamy nazwę okna, wyśrodkowanie okna do środka oraz
-    // ustawiamy ignorowanie charsetu - niektóre wiadomości wymagają tego, żeby
-    // poprawnie się wyświetlić
     private void initCustom() {
         this.setTitle("Podgląd wiadomości");
         this.setLocationRelativeTo(null);
         jTextPane1.getDocument().putProperty("IgnoreCharsetDirective", Boolean.TRUE);
     }
     
-    // funkcja otwierająca plik w systemie
     private void openFile(String filename) {
         // tworzymy obiekt pliku
         File file = new File(filename);
         
-        // sprawdzamy czy system jest wspierany
         if(!Desktop.isDesktopSupported()){
             JOptionPane.showMessageDialog(null, "System nie jest wspierany!");
             return;
         }
         
-        // tworzymy obiekt połączenia z systemem
         Desktop desktop = Desktop.getDesktop();
-        // jeżeli plik istnieje
         if(file.exists()) {
             try {
-                // próbujemy otworzyć go w systemie
                 desktop.open(file);
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(null, "Błąd otwierania pliku!");
@@ -54,8 +46,6 @@ public class FullMessage extends javax.swing.JDialog {
         }
     }
     
-    // funkcja służąca do ustawienia danych wiadomości do wyświetlenia
-    // dane pobieramy z obiektu klasy ParsedMessage
     public void setData(ParsedMessage parsedMessage) {
         this.parsedMessage = parsedMessage;
         jLabel5.setText(parsedMessage.getFrom());
@@ -71,17 +61,13 @@ public class FullMessage extends javax.swing.JDialog {
             jLabel10.setText("NIE");
         }
         
-        // tworzymy nowy model dla listy załączników
         DefaultListModel<String> model = new DefaultListModel<>();
 
-        // jeżeli wiadomość zawiera załączniki
         if(parsedMessage.getFilenames() != null && parsedMessage.getFilenames().size() > 0) {
-            // nazwę każdego załącznika dodajemy do listy
             parsedMessage.getFilenames().forEach((t, u) -> {
                 model.addElement(t);
             });
             
-            // ustawiamy model dla listy załaczników
             jList1.setModel(model);
         }
     }
@@ -233,15 +219,11 @@ public class FullMessage extends javax.swing.JDialog {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         try {
-            // tworzymy plik tymczasowy
             File temp = File.createTempFile("email_" + parsedMessage.getMessageID(), ".tmp");
-            // tworzymy obiekt FileWritera
             FileWriter fileWriter = new FileWriter(temp);
-            // zapisujemy treść wiadomości w pliku
             fileWriter.write(parsedMessage.getContent());
             fileWriter.close();
             
-            // próbujemy otworzyć plik w przeglądarce
             Desktop.getDesktop().browse(temp.toURI());
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(null, "Nie można utworzyć pliku!");
@@ -249,15 +231,10 @@ public class FullMessage extends javax.swing.JDialog {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jList1ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList1ValueChanged
-        // jeżeli wartość na liście załącznikó jest ustalona
         if (!evt.getValueIsAdjusting()) {
-            // tworzymy połączenie z bazą danych
             DatabaseConnection databaseConnection = new DatabaseConnection();
             databaseConnection.setupConnection();
-            // pobieramy ścieżkę do pliku będącego załącznikiem z wiadomości
-            // o danym id oraz o wybranej nazwie
             String path = databaseConnection.getFilePath(parsedMessage.getMessageID(), jList1.getSelectedValue());
-            // próbujemy otworzyć plik w systemie
             openFile(path);
         }
     }//GEN-LAST:event_jList1ValueChanged
