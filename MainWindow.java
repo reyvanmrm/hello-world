@@ -26,8 +26,6 @@ public class MainWindow extends javax.swing.JFrame {
         initServersMap();
     }
     
-    // dane o serwerach przetrzymujemy w mapie pod numerami odpowiadającymi
-    // tymi w ComboBoxie
     private void initServersMap(){
         imapServers = new HashMap<>();
         imapServers.put(0, "imap.gmail.com");
@@ -36,26 +34,18 @@ public class MainWindow extends javax.swing.JFrame {
         imapServers.put(3, "poczta.interia.pl");
     }
     
-    // dodajemy listener do tabeli, który po kliknięciu powoduje wyświetlenie okienka z wiadomością
     private void initTableListener() {
         jTable1.getSelectionModel().addListSelectionListener((ListSelectionEvent event) -> {
             if(jTable1.getModel().getRowCount() > 0) {
                 FullMessage tempMessage = new FullMessage(null, true);
-                // pobieramy ID wiadomości z tabeli
                 int messageID = (int) (jTable1.getValueAt(jTable1.getSelectedRow(), 0));
-                // tworzymy połączenie z bazą danych
                 DatabaseConnection databaseConnection = new DatabaseConnection();
-                // ustawiamy dane wyszukiwania wiadomości
                 HashMap<String, Object> searchData = new HashMap<>();
                 searchData.put("id", messageID);
-                // wyszukujemy wiadomość w bazie
                 ArrayList<ParsedMessage> search = databaseConnection.search(searchData);
-                // jeżeli znaleziono dokładnie jedną wiadomość
                 if(search != null && search.size() == 1) {
-                    // pobieramy ją z wyników
                     ParsedMessage parsedMessage = search.get(0);
                 
-                    // wyświetlamy wiadomość
                     tempMessage.setData(parsedMessage);
                     tempMessage.setVisible(true);
                 } else {
@@ -317,8 +307,6 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField1ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // logujemy się do skrzynki najpierw ustawiając dane logowania
-        // a następnie pobieramy foldery z serwera oraz wiadomości z folderu INBOX
         jButton1.setEnabled(false);
         jButton1.setText("Pobieram...");
         Mailing mailing = new Mailing();
@@ -339,22 +327,16 @@ public class MainWindow extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
-    // otrzymaną listę folderów dodajemy do drzewa folderów w aplikacji
     private void applyFolders(ArrayList<Object> folders) {
         DefaultMutableTreeNode mainNode = new DefaultMutableTreeNode("Wiadomości");
         
-        // dla każdego otrzymanego folderu
         folders.stream().forEach((t) -> {
-            // jeżeli Object jest kolejną listą
             if(t instanceof ArrayList) {
                 folderName = "Subfolder";
                 
-                // jeżeli lista zawiera elementy
                 if(((ArrayList) t).size() > 0) {
-                    // pobieramy pierwszy element, żeby otrzymać nazwę folderu nadrzędnego
                     String temp = ((ArrayList) t).get(0).toString();
                     
-                    // dzielimy nazwę folderu i wyciągamy nazwę folderu nadrżednego
                     if(temp.contains("/")) {
                         folderName = temp.split("/")[0]; 
                     } else if(temp.contains(".")) {
@@ -362,32 +344,27 @@ public class MainWindow extends javax.swing.JFrame {
                     }
                 }
                 
-                // tworzymy folder nadrzędny
                 DefaultMutableTreeNode subNode = new DefaultMutableTreeNode(folderName);
                 
-                // dla folderu nadrzędnego pobieramy jego elementy
+ 
                 ((ArrayList) t).stream().forEach((k) -> {
                     String temporary = k.toString();
                     
-                    // ustawiamy zmienną, definiującą używany separator w nazwach folderów
                     if(temporary.contains("/")) {
                         ex = "/";
                     } else if(temporary.contains(".")) {
                         ex = "."; 
                     }
                     
-                    // oraz dodajemy je do drzewa, jednocześnie usuwając nazwę folderu nadrzędnego
                     subNode.add(new DefaultMutableTreeNode(k.toString().replace(folderName + ex, "")));
                 });
                 
                 mainNode.add(subNode);
-            // jeżeli folder nie zawiera pod folderów dodajemy go do drzewa
             } else {
                 mainNode.add(new DefaultMutableTreeNode(t.toString()));
             }            
         });
         
-        // ustawiamy drzewo folderów
         jTree1.setModel(new DefaultTreeModel(mainNode));
     }
     
@@ -395,13 +372,10 @@ public class MainWindow extends javax.swing.JFrame {
         applyMessages(messages, true);
     }
     
-    // wszystkie otrzymane wiadomości są dodawane do tabeli w oknie programu
     private void applyMessages(ArrayList<ParsedMessage> messages, boolean loadAll) {
         jTable1.setModel(new DefaultTableModel(new Object [][] {}, new String [] {"ID", "Nadawca", "Odbiorca", "Temat", "Wysłano", "Treść"}));
         
-        // sprawdzamy czy dostarczone zostały wiadomości
         if(messages != null && messages.size() > 0) {
-            // dla każdej wiadomości wykonujemy dodawanie do tabeli
             messages.stream().forEach((parsedMessage) -> {
                 addMessageRow(parsedMessage);
                 
@@ -411,25 +385,20 @@ public class MainWindow extends javax.swing.JFrame {
                 }
             });
             
-            // jeżeli wyszukiwano, a nie np. zmieniano folder wyświetlamy
-            // informację o zakończeniu wyszukiwania
+
             if(!loadAll) {
                 JOptionPane.showMessageDialog(null, "Wyszukiwanie zakończone!");
             }
         } else {
-            // informujemy o braku wyników
             JOptionPane.showMessageDialog(null, "Wyszukiwanie zakończone! Nie znaleziono pasujących wyników!");
         }
     }
     
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        // wyszukujemy po wciśnięciu przycisku wyszukiwania
         search(false);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        // jeżeli resetujemy filtry wyszukiwania to pobieramy wszystkie 
-        // wiadomości i usuwamy wyszukiwany tekst i zaznaczenia
         search(true);
         jTextField1.setText("");
         jCheckBox1.setSelected(false);
@@ -442,42 +411,33 @@ public class MainWindow extends javax.swing.JFrame {
     private void jTree1ValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_jTree1ValueChanged
         DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) jTree1.getLastSelectedPathComponent(); 
         
-        // jeżeli kliknięto prawidłowy folder wiadomości
         if(selectedNode != null && selectedNode.getChildCount() == 0 && !selectedNode.toString().equals("Wiadomości")) {
             folderName = "";
             DefaultMutableTreeNode parent = (DefaultMutableTreeNode) selectedNode.getParent();
             
-            // jeżeli folder ma nadfolder to dodajemy go do nazwy folderu na serwerze
             if(parent != null && !parent.toString().equals("Wiadomości")) {
                 folderName = parent.toString() + ex;
             }
             
-            // dodajemy nazwę folderu do całej nazwy na serwerze
             folderName = folderName.concat(selectedNode.toString());
             
-            // pobieramy wiadomości z serwera z danego folderu
             Mailing mailing = new Mailing();
             mailing.setCredentials(imapServers.get(jComboBox2.getSelectedIndex()), jTextField1.getText(), new String(jPasswordField1.getPassword()));
             ArrayList<ParsedMessage> messages = mailing.downloadMessages(folderName);
 
-            // dodajemy wiadomości do tabeli
         }        
     }//GEN-LAST:event_jTree1ValueChanged
 
     private void jPasswordField1KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jPasswordField1KeyPressed
-        // jeżeli klikniemy enter w polu hasła automatycznie logujemy się do skrzynki
         if(evt.getKeyCode() == KeyEvent.VK_ENTER) {
             jButton1.doClick();
         }
     }//GEN-LAST:event_jPasswordField1KeyPressed
 
-    // funkcja służąca do wyszukiwania wiadomości
-    // jeżeli loadAll = true to ładujemy wszystkie wiadomości z folderu
     private void search(boolean loadAll) {
         String searchingString = jTextField2.getText();
         HashMap<String, Object> searchData = new HashMap<>();
         
-        // dodajemy do mapy pola do wyszukiwania zależnie od zaznaczeń CheckBoxów
         if(jCheckBox1.isSelected()) {
             searchData.put("sender", searchingString);
         }
@@ -498,28 +458,20 @@ public class MainWindow extends javax.swing.JFrame {
             searchData.put("seen", 0);
         }
         
-        // jeżeli nie zaznaczono żadnego pola do wyszukania
-        // usuwamy dane wyszukiwania
         if(searchData.isEmpty()) {
             searchData = null;
         }
-        
-        // pobieramy z bazy danych wszystkie wiadomości
-        // lub tylko te odpowiadające danym w mapie wyszukiwania
+
         DatabaseConnection databaseConnection = new DatabaseConnection();
         ArrayList<ParsedMessage> messages = (loadAll) ? databaseConnection.getAll() : databaseConnection.search(searchData);
         
-        // jeżeli znaleziono w bazie wiadomości to uzupełniamy tabelę znalezionymi wiadomościami
         applyMessages(messages, true);
     }
     
-    // dodajemy pojedynczą wiadomość do tabeli
     public void addMessageRow(ParsedMessage parsedMessage) {
-        // jeżeli wiadomość była wyświetlona wcześniej nie formatujemy wiersza
         if(parsedMessage.getSeen()) {
             ((DefaultTableModel) jTable1.getModel()).addRow(parsedMessage.getArray());
         } else {
-            // w przeciwnym wypadku dodajemy pogrubienie, formatując dane przez HTML
             Object field1 = parsedMessage.getMessageID();
             Object field2 = "<html><b>" + parsedMessage.getFrom() + "</b></html>";
             Object field3 = "<html><b>" + parsedMessage.getRecipients() + "</b></html>";
@@ -527,7 +479,6 @@ public class MainWindow extends javax.swing.JFrame {
             Object field5 = "<html><b>" + parsedMessage.getSendDate() + "</b></html>";
             Object field6 = parsedMessage.getContent();
             
-            // dodajemy sformatowany wiersz do modelu tabeli
             ((DefaultTableModel) jTable1.getModel()).addRow(new Object[] {field1, field2, field3, field4, field5, field6});
         }
         
