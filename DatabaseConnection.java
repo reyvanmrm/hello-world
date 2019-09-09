@@ -29,16 +29,13 @@ public class DatabaseConnection {
         this.databaseFilename = "mails.db";
     }
     
-    // funkcja ustawiająca plik, który będzie służył za bazę danych
     public void setDatabaseFilename(String filename) {
         this.databaseFilename = filename;
     }
     
-    // funkcja tworząca bazę danych dla emaili
     protected void setupDatabase() {
         File file = new File(databaseFilename);
         
-        // jeżeli istnieje stara baza to usuwamy ją
         if(file.exists()) {
             file.delete();
         }
@@ -47,17 +44,13 @@ public class DatabaseConnection {
         createTables();
     }
     
-    // funkcja tworząca połączenie z bazą
     protected void setupConnection() {
-        // sprawdzamy czy obecny jest sterownik do bazy danych
         try {
             Class.forName(DatabaseConnection.DRIVER);
         } catch (ClassNotFoundException e) {
             JOptionPane.showMessageDialog(null, "Brak sterownika JDBC!");
         }
  
-        // próbujemy ustanowić połączenie z bazą SQLite
-        // plik jest automatycznie tworzony
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + databaseFilename);
             statement = connection.createStatement();
@@ -66,7 +59,6 @@ public class DatabaseConnection {
         }
     }
     
-    // funkcja tworzy tabelę do przechowywania emaili
     private boolean createTables() {
         String createTable = "CREATE TABLE IF NOT EXISTS mails (\n" +
             " id integer PRIMARY KEY,\n" +
@@ -78,7 +70,6 @@ public class DatabaseConnection {
             " seen tinyint(1) NOT NULL DEFAULT \"1\"\n" +
             ");";
         
-        // oraz tabelę do przechowywania informacji o załącznikach
         String createAttackmentsTable = "CREATE TABLE IF NOT EXISTS attachments (\n" +
             " id integer PRIMARY KEY,\n" +
             " mid integer NOT NULL,\n" +
@@ -95,7 +86,6 @@ public class DatabaseConnection {
         } return true;
     }
     
-    // funkcja usuwa emaile ze wcześniejszych wczytań wiadomości
     public void cleanupDatabase() {
         String deleteQuery = "DELETE FROM mails;";
         String deleteAttachmentsQuery = "DELETE FROM attachments;";
@@ -108,7 +98,6 @@ public class DatabaseConnection {
         }
     }
     
-    // funkcja dodająca email do tabeli w bazie danych
     public boolean insert(ParsedMessage parsedMessage) {
         try {
             PreparedStatement prepStmt = connection.prepareStatement(
@@ -125,7 +114,6 @@ public class DatabaseConnection {
             prepStmt.setBoolean(7, parsedMessage.getSeen());
             prepStmt.execute();
             
-            // dla każdego pliku wykonujemy dodanie do bazy danych
             parsedMessage.getFilenames().forEach((t, u) -> {
                 try {
                     prepAttachmentsStmt.setInt(1, parsedMessage.getMessageID());
@@ -142,13 +130,10 @@ public class DatabaseConnection {
         } return true;
     }
     
-    // pobieranie wszystkich wiadomości z tabeli
     public ArrayList<ParsedMessage> getAll() {
         return search(null);
     }
     
-    // funkcja umożliwia pobranie ścieżki do załącznika
-    // o danej nazwie z danej wiadomości
     public String getFilePath(int messageID, String filename) {
         try {
             searchString = "SELECT path FROM attachments WHERE mid = " + messageID + " AND filename LIKE '" + filename + "' LIMIT 1;";
@@ -164,26 +149,19 @@ public class DatabaseConnection {
         }
     }
     
-    // funkcja umożliwiająca wyszukanie emaili w bazie danych
     public ArrayList<ParsedMessage> search(HashMap<String, Object> searchData) {
-        // ustanawiamy połączenie z bazą
         setupConnection();
         
         ArrayList<ParsedMessage> returnValue = new ArrayList<>();
         
         try {
-            // domyślnie pobieramy wszystkie rekordy
             searchString = "SELECT * FROM mails";
             
-            // jeżeli dostarczono dane do wyszukiwania dodajemy je do zapytania SQL
             if(searchData != null) {
                 searchString = searchString.concat(" WHERE ");
                 counter = 1;
                 
-                // dla każdego elementy wyszukiwania dodajemy element do zapytania SQL
                 searchData.forEach((t, u) -> {
-                    // jeżeli dostarczono łańcuch znaków używamy LIKE
-                    // w przeciwnym przypadku używamy znaku równości
                     if(u instanceof String) {
                        searchString = searchString.concat(t + " LIKE '%" + u + "%'"); 
                     } else {
@@ -199,14 +177,12 @@ public class DatabaseConnection {
             
             searchString = searchString.concat(";");
             
-            // wyszukujemy wiadomości
             ResultSet result = statement.executeQuery(searchString);
             
             int messageID;
             String from, recipients, subject, sendTime, content;
             boolean seen;
             
-            // wracamy wszystkie wiadomości w formie obiektu ParsedMessage
             while(result.next()) {
                 messageID = result.getInt("id");
                 from = result.getString("sender");
@@ -216,22 +192,17 @@ public class DatabaseConnection {
                 content = result.getString("content");
                 seen = result.getBoolean("seen");
                 
-                // do wiadomości pobieramy także załączniki
                 String searchAttachmentsString = "SELECT * FROM attachments WHERE mid = " + messageID;
                 ResultSet resultAttachmentsSet = statement.executeQuery(searchAttachmentsString);
                 HashMap<String, String> files = new HashMap<>();
                 
-                // dodajemy je do listy plików
                 while(resultAttachmentsSet.next()) {
                     files.put(resultAttachmentsSet.getString("filename"), resultAttachmentsSet.getString("path"));
                 }
                 
-                // tworzymy wiadomość
                 ParsedMessage parsedMessage = new ParsedMessage(messageID, from, recipients, subject, sendTime, content, seen);
-                // dodajemy do niej pliki
                 parsedMessage.addFiles(files);
                 
-                // dodajemy wiadomość z załącznikami do zwracanej listy wiadomości
                 returnValue.add(parsedMessage);
             }
         } catch (SQLException e) {
@@ -240,7 +211,6 @@ public class DatabaseConnection {
         } return returnValue;
     }
     
-    // funkcja zamykająca połączenie z bazą danych
     public void closeConnection() {
         try {
             connection.close();
