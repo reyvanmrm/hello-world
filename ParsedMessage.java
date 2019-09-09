@@ -14,7 +14,6 @@ public class ParsedMessage {
     private String sendDate;
     private boolean seen;
     private int messageID;
-    // hashmap do przechowywania nazwy załączników i ścieżki
     private HashMap<String, String> filenames;
     
     public ParsedMessage() {
@@ -22,7 +21,6 @@ public class ParsedMessage {
         content = "";
     }
         
-    // konstruktor pozwalający stworzyć ParsedMessage ze wszystkimi danymi
     public ParsedMessage(int messageID, String from, String recipients, String subject, String sendDate, String content, boolean seen) {
         this.messageID = messageID;
         this.from = from;
@@ -34,7 +32,6 @@ public class ParsedMessage {
         filenames = new HashMap<>();
     }
     
-    // settery i gettery dla zmiennych wiadomości
     public void setFrom(String from) {
         this.from = from;
     }
@@ -91,28 +88,22 @@ public class ParsedMessage {
         return this.messageID;
     }
     
-    // zwracamy wszystkie pliki wraz ze ścieżkami
     public HashMap<String, String> getFilenames() {
         return filenames;
     }
     
-    // dodajemy pliki do hashmapy
     public void addFiles(HashMap<String, String> files) {
         // wrzucamy całe files do filenames
         filenames.putAll(files);
     }
     
-    // funkcja dodająca do treści wiadomości kolejną jej część
     public void addContentPart(String contentPart) {
         this.content = this.content.concat(contentPart);
     }
-    
-    // funkcja zwracająca dane wiadomości w postaci tablicy
     public Object[] getArray() {
         return new Object[] {messageID, from, recipients, subject, sendDate, content, seen};
     }
     
-    // funkcja wyświtlająca wiadomość w konsoli
     public void printMessage() {
         System.out.println("****************");
         System.out.println("Przypisane ID: " + messageID);
